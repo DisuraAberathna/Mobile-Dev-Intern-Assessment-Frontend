@@ -18,6 +18,8 @@ import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { CustomAlert, AlertType } from "@/components/ui/custom-alert";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as authService from "@/api/auth";
 
 export default function RegisterScreen() {
   const [name, setName] = useState("");
@@ -61,17 +63,50 @@ export default function RegisterScreen() {
     setLoading(true);
 
     try {
-      console.log("Registering with:", { name, username, password, role });
+      const data = await authService.register({
+        name,
+        username,
+        password,
+        role,
+      });
 
-      // Simulate API call
-      setTimeout(() => {
-        setLoading(false);
-        router.replace("/login");
-      }, 1500);
-    } catch {
+      if (data.token) {
+        await AsyncStorage.setItem("userToken", data.token);
+        if (data.role) {
+          await AsyncStorage.setItem("userRole", data.role);
+        }
+
+        setAlertConfig({
+          title: "Success",
+          message: "Registration successful! Redirecting to home...",
+          type: "success",
+        });
+        setShowAlert(true);
+
+        setTimeout(() => {
+          setLoading(false);
+          router.replace("/(tabs)/home");
+        }, 1500);
+      } else {
+        throw new Error("Token not received");
+      }
+    } catch (error: any) {
+      console.error("Registration Error:", error);
+
+      let errorMessage = "Registration failed. Please try again.";
+      let errorTitle = "Registration Failed";
+
+      if (error.response) {
+        errorMessage = error.response.data.message || errorMessage;
+      } else if (error.request) {
+        errorMessage =
+          "Unable to connect to the server. Please check your internet connection.";
+        errorTitle = "Network Error";
+      }
+
       setAlertConfig({
-        title: "Registration Error",
-        message: "Something went wrong. Please try again later.",
+        title: errorTitle,
+        message: errorMessage,
         type: "error",
       });
       setShowAlert(true);
