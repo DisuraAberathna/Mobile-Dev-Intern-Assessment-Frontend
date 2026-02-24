@@ -8,6 +8,7 @@ import {
   Platform,
   View,
   ScrollView,
+  Keyboard,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -16,6 +17,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { CustomAlert, AlertType } from "@/components/ui/custom-alert";
 
 export default function RegisterScreen() {
   const [name, setName] = useState("");
@@ -24,24 +26,39 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState("user"); // Default role
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({
+    title: "",
+    message: "",
+    type: "error" as AlertType,
+  });
 
   const router = useRouter();
   const colorScheme = useColorScheme() ?? "light";
 
   const handleRegister = async () => {
+    Keyboard.dismiss();
     if (!name || !username || !password || !confirmPassword) {
-      setError("Please fill in all fields");
+      setAlertConfig({
+        title: "Required Fields",
+        message: "Please fill in all the details to continue.",
+        type: "warning",
+      });
+      setShowAlert(true);
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setAlertConfig({
+        title: "Password Mismatch",
+        message: "Confirm password does not match with the password.",
+        type: "error",
+      });
+      setShowAlert(true);
       return;
     }
 
     setLoading(true);
-    setError(null);
 
     try {
       console.log("Registering with:", { name, username, password, role });
@@ -51,22 +68,36 @@ export default function RegisterScreen() {
         setLoading(false);
         router.replace("/login");
       }, 1500);
-    } catch (err) {
-      setError("Registration failed. Please try again.");
+    } catch {
+      setAlertConfig({
+        title: "Registration Error",
+        message: "Something went wrong. Please try again later.",
+        type: "error",
+      });
+      setShowAlert(true);
       setLoading(false);
     }
   };
 
   return (
     <ThemedView style={styles.container}>
+      <CustomAlert
+        visible={showAlert}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onConfirm={() => setShowAlert(false)}
+      />
       <SafeAreaView style={{ flex: 1 }}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardView}
+          enabled={Platform.OS === "ios"}
         >
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
             <View style={styles.header}>
               <TouchableOpacity
@@ -205,17 +236,6 @@ export default function RegisterScreen() {
                 </View>
               </View>
 
-              {error && (
-                <View style={styles.errorContainer}>
-                  <MaterialIcons
-                    name="error-outline"
-                    size={16}
-                    color="#ff3b30"
-                  />
-                  <ThemedText style={styles.errorText}>{error}</ThemedText>
-                </View>
-              )}
-
               <TouchableOpacity
                 style={[
                   styles.registerButton,
@@ -265,6 +285,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 24,
     paddingTop: 20,
     paddingBottom: 40,

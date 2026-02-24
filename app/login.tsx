@@ -7,6 +7,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   View,
+  Keyboard,
+  ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -15,25 +17,36 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { CustomAlert, AlertType } from "@/components/ui/custom-alert";
 
 export default function LoginScreen() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({
+    title: "",
+    message: "",
+    type: "error" as AlertType,
+  });
   const [showPassword, setShowPassword] = useState(false);
 
   const router = useRouter();
   const colorScheme = useColorScheme() ?? "light";
 
   const handleLogin = async () => {
+    Keyboard.dismiss();
     if (!username || !password) {
-      setError("Please fill in all fields");
+      setAlertConfig({
+        title: "Required Fields",
+        message: "Please enter both username and password to continue.",
+        type: "warning",
+      });
+      setShowAlert(true);
       return;
     }
 
     setLoading(true);
-    setError(null);
 
     try {
       console.log("Logging in with:", { username, password });
@@ -41,167 +54,183 @@ export default function LoginScreen() {
       // Temporary success mock
       setTimeout(() => {
         setLoading(false);
-        router.replace("/(tabs)");
+        router.replace("/(tabs)/home");
       }, 1500);
-    } catch (err) {
-      setError("Login failed. Please check your credentials.");
+    } catch {
+      setAlertConfig({
+        title: "Login Failed",
+        message: "Invalid credentials. Please try again.",
+        type: "error",
+      });
+      setShowAlert(true);
       setLoading(false);
     }
   };
 
   return (
     <ThemedView style={styles.container}>
+      <CustomAlert
+        visible={showAlert}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onConfirm={() => setShowAlert(false)}
+      />
       <SafeAreaView style={{ flex: 1 }}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={styles.keyboardView}
+          enabled={Platform.OS === "ios"}
         >
-          <View style={styles.content}>
-            <View style={styles.logoContainer}>
-              <View
-                style={[
-                  styles.logoIcon,
-                  { backgroundColor: Colors[colorScheme].tint + "20" },
-                ]}
-              >
-                <MaterialIcons
-                  name="lock"
-                  size={40}
-                  color={Colors[colorScheme].tint}
-                />
-              </View>
-              <ThemedText type="title" style={styles.title}>
-                Secure Login
-              </ThemedText>
-              <ThemedText style={styles.subtitle}>
-                Enter your details to access your account
-              </ThemedText>
-            </View>
-
-            <View style={styles.formContainer}>
-              <View style={styles.inputWrapper}>
-                <ThemedText style={styles.label}>Username</ThemedText>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.content}>
+              <View style={styles.logoContainer}>
                 <View
                   style={[
-                    styles.inputContainer,
-                    {
-                      borderColor: colorScheme === "dark" ? "#333" : "#eee",
-                      backgroundColor:
-                        colorScheme === "dark" ? "#1c1c1e" : "#f2f2f7",
-                    },
+                    styles.logoIcon,
+                    { backgroundColor: Colors[colorScheme].tint + "20" },
                   ]}
                 >
                   <MaterialIcons
-                    name="person-outline"
-                    size={20}
-                    color="#8e8e93"
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    style={[styles.input, { color: Colors[colorScheme].text }]}
-                    placeholder="Username"
-                    placeholderTextColor="#8e8e93"
-                    value={username}
-                    onChangeText={setUsername}
-                    autoCapitalize="none"
+                    name="lock"
+                    size={40}
+                    color={Colors[colorScheme].tint}
                   />
                 </View>
+                <ThemedText type="title" style={styles.title}>
+                  Secure Login
+                </ThemedText>
+                <ThemedText style={styles.subtitle}>
+                  Enter your details to access your account
+                </ThemedText>
               </View>
 
-              <View style={styles.inputWrapper}>
-                <View style={styles.labelRow}>
-                  <ThemedText style={styles.label}>Password</ThemedText>
-                  <TouchableOpacity>
+              <View style={styles.formContainer}>
+                <View style={styles.inputWrapper}>
+                  <ThemedText style={styles.label}>Username</ThemedText>
+                  <View
+                    style={[
+                      styles.inputContainer,
+                      {
+                        borderColor: colorScheme === "dark" ? "#333" : "#eee",
+                        backgroundColor:
+                          colorScheme === "dark" ? "#1c1c1e" : "#f2f2f7",
+                      },
+                    ]}
+                  >
+                    <MaterialIcons
+                      name="person-outline"
+                      size={20}
+                      color="#8e8e93"
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      style={[
+                        styles.input,
+                        { color: Colors[colorScheme].text },
+                      ]}
+                      placeholder="Username"
+                      placeholderTextColor="#8e8e93"
+                      value={username}
+                      onChangeText={setUsername}
+                      autoCapitalize="none"
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.inputWrapper}>
+                  <View style={styles.labelRow}>
+                    <ThemedText style={styles.label}>Password</ThemedText>
+                    <TouchableOpacity>
+                      <ThemedText
+                        style={[
+                          styles.forgotPassword,
+                          { color: Colors[colorScheme].tint },
+                        ]}
+                      >
+                        Forgot Password?
+                      </ThemedText>
+                    </TouchableOpacity>
+                  </View>
+                  <View
+                    style={[
+                      styles.inputContainer,
+                      {
+                        borderColor: colorScheme === "dark" ? "#333" : "#eee",
+                        backgroundColor:
+                          colorScheme === "dark" ? "#1c1c1e" : "#f2f2f7",
+                      },
+                    ]}
+                  >
+                    <MaterialIcons
+                      name="lock-outline"
+                      size={20}
+                      color="#8e8e93"
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      style={[
+                        styles.input,
+                        { color: Colors[colorScheme].text },
+                      ]}
+                      placeholder="Password"
+                      placeholderTextColor="#8e8e93"
+                      secureTextEntry={!showPassword}
+                      value={password}
+                      onChangeText={setPassword}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowPassword(!showPassword)}
+                    >
+                      <MaterialIcons
+                        name={showPassword ? "visibility-off" : "visibility"}
+                        size={20}
+                        color="#8e8e93"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  style={[
+                    styles.loginButton,
+                    { backgroundColor: Colors[colorScheme].tint },
+                  ]}
+                  onPress={handleLogin}
+                  disabled={loading}
+                  activeOpacity={0.8}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <ThemedText style={styles.loginButtonText}>
+                      Log In
+                    </ThemedText>
+                  )}
+                </TouchableOpacity>
+
+                <View style={styles.footer}>
+                  <ThemedText style={styles.footerText}>
+                    Don&apos;t have an account?{" "}
+                  </ThemedText>
+                  <TouchableOpacity onPress={() => router.push("/register")}>
                     <ThemedText
                       style={[
-                        styles.forgotPassword,
+                        styles.footerLink,
                         { color: Colors[colorScheme].tint },
                       ]}
                     >
-                      Forgot Password?
+                      Create Account
                     </ThemedText>
                   </TouchableOpacity>
                 </View>
-                <View
-                  style={[
-                    styles.inputContainer,
-                    {
-                      borderColor: colorScheme === "dark" ? "#333" : "#eee",
-                      backgroundColor:
-                        colorScheme === "dark" ? "#1c1c1e" : "#f2f2f7",
-                    },
-                  ]}
-                >
-                  <MaterialIcons
-                    name="lock-outline"
-                    size={20}
-                    color="#8e8e93"
-                    style={styles.inputIcon}
-                  />
-                  <TextInput
-                    style={[styles.input, { color: Colors[colorScheme].text }]}
-                    placeholder="Password"
-                    placeholderTextColor="#8e8e93"
-                    secureTextEntry={!showPassword}
-                    value={password}
-                    onChangeText={setPassword}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowPassword(!showPassword)}
-                  >
-                    <MaterialIcons
-                      name={showPassword ? "visibility-off" : "visibility"}
-                      size={20}
-                      color="#8e8e93"
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {error && (
-                <View style={styles.errorContainer}>
-                  <MaterialIcons
-                    name="error-outline"
-                    size={16}
-                    color="#ff3b30"
-                  />
-                  <ThemedText style={styles.errorText}>{error}</ThemedText>
-                </View>
-              )}
-
-              <TouchableOpacity
-                style={[
-                  styles.loginButton,
-                  { backgroundColor: Colors[colorScheme].tint },
-                ]}
-                onPress={handleLogin}
-                disabled={loading}
-                activeOpacity={0.8}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <ThemedText style={styles.loginButtonText}>Log In</ThemedText>
-                )}
-              </TouchableOpacity>
-
-              <View style={styles.footer}>
-                <ThemedText style={styles.footerText}>
-                  Don't have an account?{" "}
-                </ThemedText>
-                <TouchableOpacity onPress={() => router.push("/register")}>
-                  <ThemedText
-                    style={[
-                      styles.footerLink,
-                      { color: Colors[colorScheme].tint },
-                    ]}
-                  >
-                    Create Account
-                  </ThemedText>
-                </TouchableOpacity>
               </View>
             </View>
-          </View>
+          </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </ThemedView>
@@ -215,11 +244,15 @@ const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   content: {
     flex: 1,
     paddingHorizontal: 24,
     justifyContent: "center",
     paddingBottom: 40,
+    width: "100%",
   },
   logoContainer: {
     alignItems: "center",
