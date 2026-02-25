@@ -109,7 +109,23 @@ export default function HomeScreen() {
   const fetchAiRecommendations = async (prompt: string) => {
     setAiLoading(true);
     try {
-      const data = await geminiService.getAiRecommendations(prompt);
+      const response = await geminiService.getAiRecommendations(prompt);
+
+      if (response.status >= 400) {
+        const errorMessage =
+          response.data?.message || "Failed to fetch AI recommendations.";
+        setAlertConfig({
+          title: "Recommendation Error",
+          message: errorMessage,
+          type: "error",
+          confirmText: "OK",
+          cancelText: undefined,
+        });
+        setShowAlert(true);
+        return;
+      }
+
+      const data = response.data.recommendations || [];
       setAiCourses(data);
 
       await Promise.all([
@@ -117,7 +133,7 @@ export default function HomeScreen() {
         AsyncStorage.setItem("cachedAiCourses", JSON.stringify(data)),
         AsyncStorage.setItem("lastAiFetchTime", Date.now().toString()),
       ]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("AI Fetch error:", error);
     } finally {
       setAiLoading(false);
@@ -174,86 +190,53 @@ export default function HomeScreen() {
     course.title.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const recommendedCourses = courses.slice(0, 5);
+  const renderRecommendations = () => {
+    const hasAiCourses = aiCourses.length > 0;
+    const displayData = hasAiCourses ? aiCourses : courses.slice(0, 5);
 
-  const renderRecommended = () => (
-    <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <ThemedText type="subtitle">Recommended for You</ThemedText>
-        <TouchableOpacity>
-          <ThemedText style={[styles.seeAll, { color: tintColor }]}>
-            See All
-          </ThemedText>
-        </TouchableOpacity>
-      </View>
-      <FlashList
-        data={recommendedCourses}
-        renderItem={({ item }) => (
-          <CourseCard
-            course={item}
-            horizontal
-            onPress={() =>
-              router.push({
-                pathname: "/course/[id]",
-                params: { id: item._id },
-              })
-            }
-          />
-        )}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.horizontalList}
-      />
-    </View>
-  );
-
-  const renderAiRecommendations = () => {
-    if (aiLoading) {
-      return (
-        <View style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
-            AI Recommendations
-          </ThemedText>
-          <ActivityIndicator color={tintColor} style={{ marginTop: 20 }} />
-        </View>
-      );
-    }
-
-    if (aiCourses.length === 0) return null;
+    if (displayData.length === 0 && !aiLoading) return null;
 
     return (
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <View>
-            <ThemedText type="subtitle">AI For You</ThemedText>
-            <ThemedText style={styles.sectionSubtitle}>
-              Based on your career goals
-            </ThemedText>
+            <ThemedText type="subtitle">Recommended for You</ThemedText>
+            {hasAiCourses && (
+              <ThemedText style={styles.sectionSubtitle}>
+                Based on your career goals
+              </ThemedText>
+            )}
           </View>
-          <TouchableOpacity onPress={() => router.push("/interests")}>
-            <ThemedText style={[styles.seeAll, { color: tintColor }]}>
-              Edit
-            </ThemedText>
-          </TouchableOpacity>
-        </View>
-        <FlashList
-          data={aiCourses}
-          renderItem={({ item }) => (
-            <CourseCard
-              course={item}
-              horizontal
-              onPress={() =>
-                router.push({
-                  pathname: "/course/[id]",
-                  params: { id: item._id },
-                })
-              }
-            />
+          {hasAiCourses && (
+            <TouchableOpacity onPress={() => router.push("/interests")}>
+              <ThemedText style={[styles.seeAll, { color: tintColor }]}>
+                Edit
+              </ThemedText>
+            </TouchableOpacity>
           )}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalList}
-        />
+        </View>
+        {aiLoading ? (
+          <ActivityIndicator color={tintColor} style={{ marginVertical: 40 }} />
+        ) : (
+          <FlashList
+            data={displayData}
+            renderItem={({ item }) => (
+              <CourseCard
+                course={item}
+                horizontal
+                onPress={() =>
+                  router.push({
+                    pathname: "/course/[id]",
+                    params: { id: item._id },
+                  })
+                }
+              />
+            )}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+          />
+        )}
       </View>
     );
   };
@@ -301,8 +284,7 @@ export default function HomeScreen() {
       {searchQuery === "" && user?.role !== "instructor" && (
         <>
           {renderInterestsCTA()}
-          {renderAiRecommendations()}
-          {renderRecommended()}
+          {renderRecommendations()}
         </>
       )}
 

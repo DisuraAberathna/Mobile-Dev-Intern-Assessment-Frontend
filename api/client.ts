@@ -12,9 +12,7 @@ const apiClient = axios.create({
         "Content-Type": "application/json",
         Accept: "application/json",
     },
-    validateStatus: (status) => {
-        return status < 500;
-    },
+    validateStatus: () => true,
 });
 
 apiClient.interceptors.request.use(
