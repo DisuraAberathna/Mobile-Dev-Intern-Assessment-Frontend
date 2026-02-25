@@ -53,7 +53,7 @@ export default function LoginScreen() {
     try {
       const data = await authService.login(username, password);
 
-      if (data.token) {
+      if (data && data.token) {
         await AsyncStorage.setItem("userToken", data.token);
         if (data.role) {
           await AsyncStorage.setItem("userRole", data.role);
@@ -62,7 +62,13 @@ export default function LoginScreen() {
         setLoading(false);
         router.replace("/(tabs)/home");
       } else {
-        throw new Error("Token not received");
+        setAlertConfig({
+          title: "Login Failed",
+          message: data?.message || "Token not received. Please try again.",
+          type: "error",
+        });
+        setShowAlert(true);
+        setLoading(false);
       }
     } catch (error: any) {
       console.error("Login Error:", error);
@@ -99,9 +105,9 @@ export default function LoginScreen() {
       />
       <SafeAreaView style={{ flex: 1 }}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior="padding"
           style={styles.keyboardView}
-          enabled={Platform.OS === "ios"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 50}
         >
           <ScrollView
             contentContainerStyle={styles.scrollContent}
@@ -226,9 +232,15 @@ export default function LoginScreen() {
                   activeOpacity={0.8}
                 >
                   {loading ? (
-                    <ActivityIndicator color="#fff" />
+                    <ActivityIndicator
+                      color={colorScheme === "dark" ? "#000" : "#fff"}
+                    />
                   ) : (
-                    <ThemedText style={styles.loginButtonText}>
+                    <ThemedText
+                      style={styles.loginButtonText}
+                      lightColor="#fff"
+                      darkColor="#000"
+                    >
                       Log In
                     </ThemedText>
                   )}
@@ -269,10 +281,10 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   content: {
-    flex: 1,
     paddingHorizontal: 24,
     justifyContent: "center",
     paddingBottom: 40,
+    paddingTop: 40,
     width: "100%",
   },
   logoContainer: {
@@ -360,7 +372,6 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   loginButtonText: {
-    color: "#fff",
     fontSize: 17,
     fontWeight: "700",
   },
