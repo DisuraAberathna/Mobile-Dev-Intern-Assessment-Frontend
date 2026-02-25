@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { StyleSheet, View, ActivityIndicator, BackHandler } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import NetInfo from "@react-native-community/netinfo";
 import * as Device from "expo-device";
 import { ThemedText } from "@/components/themed-text";
@@ -8,6 +9,8 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useRouter } from "expo-router";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function InitialCheckScreen() {
   const [loading, setLoading] = useState(true);
@@ -20,7 +23,6 @@ export default function InitialCheckScreen() {
     setError(null);
 
     try {
-      // 1. Check Network Connectivity
       const networkState = await NetInfo.fetch();
       if (!networkState.isConnected || !networkState.isInternetReachable) {
         setError(
@@ -30,7 +32,6 @@ export default function InitialCheckScreen() {
         return;
       }
 
-      // 2. Security Check (Simulator/Emulator Check for production)
       if (!Device.isDevice && !__DEV__) {
         setError(
           "Security Violation: This application cannot be run on an emulator in production.",
@@ -39,11 +40,15 @@ export default function InitialCheckScreen() {
         return;
       }
 
-      // 3. Optional: Root/Jailbreak check (requires more advanced libs, skipping for Expo Go compatibility)
+      const token = await AsyncStorage.getItem("userToken");
+      const role = await AsyncStorage.getItem("userRole");
 
-      // If all checks pass, navigate to Login
       setTimeout(() => {
-        router.replace("/login");
+        if (token && role) {
+          router.replace("/(tabs)/home");
+        } else {
+          router.replace("/login");
+        }
       }, 1500);
     } catch (err) {
       console.error("Initial check failed:", err);
@@ -66,68 +71,81 @@ export default function InitialCheckScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.logoContainer}>
-          <View
-            style={[
-              styles.iconCircle,
-              { backgroundColor: Colors[colorScheme].tint + "15" },
-            ]}
-          >
-            <MaterialIcons
-              name={error ? "security" : "shield"}
-              size={60}
-              color={error ? "#ff3b30" : Colors[colorScheme].tint}
-            />
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.content}>
+          <View style={styles.logoContainer}>
+            <View
+              style={[
+                styles.iconCircle,
+                { backgroundColor: Colors[colorScheme].tint + "15" },
+              ]}
+            >
+              <MaterialIcons
+                name={error ? "security" : "shield"}
+                size={60}
+                color={error ? "#ff3b30" : Colors[colorScheme].tint}
+              />
+            </View>
+            <ThemedText type="title" style={styles.title}>
+              {error ? "Security Check" : "TradeHub"}
+            </ThemedText>
+            <ThemedText style={styles.subtitle}>
+              {error
+                ? "Action Required"
+                : "Performing secure startup checks..."}
+            </ThemedText>
           </View>
-          <ThemedText type="title" style={styles.title}>
-            {error ? "Security Check" : "TradeHub"}
-          </ThemedText>
-          <ThemedText style={styles.subtitle}>
-            {error ? "Action Required" : "Performing secure startup checks..."}
-          </ThemedText>
-        </View>
 
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors[colorScheme].tint} />
-            <ThemedText style={styles.loadingText}>Please wait...</ThemedText>
-          </View>
-        ) : error ? (
-          <View style={styles.errorContainer}>
-            <ThemedText style={styles.errorText}>{error}</ThemedText>
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator
+                size="large"
+                color={Colors[colorScheme].tint}
+              />
+              <ThemedText style={styles.loadingText}>Please wait...</ThemedText>
+            </View>
+          ) : error ? (
+            <View style={styles.errorContainer}>
+              <ThemedText style={styles.errorText}>{error}</ThemedText>
 
-            <View style={styles.buttonGroup}>
-              <View
-                style={[
-                  styles.button,
-                  { backgroundColor: Colors[colorScheme].tint },
-                ]}
-                onTouchEnd={handleRetry}
-              >
-                <ThemedText style={styles.buttonText}>Retry Checks</ThemedText>
-              </View>
-              <View
-                style={[
-                  styles.button,
-                  {
-                    backgroundColor: "transparent",
-                    borderWidth: 1,
-                    borderColor: "#ff3b30",
-                    marginTop: 12,
-                  },
-                ]}
-                onTouchEnd={handleExit}
-              >
-                <ThemedText style={[styles.buttonText, { color: "#ff3b30" }]}>
-                  Exit Application
-                </ThemedText>
+              <View style={styles.buttonGroup}>
+                <View
+                  style={[
+                    styles.button,
+                    { backgroundColor: Colors[colorScheme].tint },
+                  ]}
+                  onTouchEnd={handleRetry}
+                >
+                  <ThemedText
+                    style={styles.buttonText}
+                    lightColor="#fff"
+                    darkColor="#000"
+                  >
+                    Retry Checks
+                  </ThemedText>
+                </View>
+                <View
+                  style={[
+                    styles.button,
+                    {
+                      backgroundColor: "transparent",
+                      borderWidth: 1,
+                      borderColor: "#ff3b30",
+                      marginTop: 12,
+                    },
+                  ]}
+                  onTouchEnd={handleExit}
+                >
+                  <ThemedText style={[styles.buttonText, { color: "#ff3b30" }]}>
+                    Exit Application
+                  </ThemedText>
+                </View>
               </View>
             </View>
-          </View>
-        ) : null}
-      </View>
-      <ThemedText style={styles.versionText}>Version 1.0.0</ThemedText>
+          ) : null}
+        </View>
+        <ThemedText style={styles.versionText}>Version 1.0.0</ThemedText>
+      </SafeAreaView>
     </ThemedView>
   );
 }
@@ -138,6 +156,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 40,
+  },
+  safeArea: {
+    flex: 1,
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
   },
   content: {
     width: "100%",
@@ -195,7 +219,6 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   buttonText: {
-    color: "#fff",
     fontSize: 16,
     fontWeight: "700",
   },
