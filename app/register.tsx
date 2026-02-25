@@ -23,7 +23,7 @@ import * as authService from "@/api/auth";
 
 export default function RegisterScreen() {
   const [name, setName] = useState("");
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState("student");
@@ -40,7 +40,7 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     Keyboard.dismiss();
-    if (!name || !username || !password || !confirmPassword) {
+    if (!name || !email || !password || !confirmPassword) {
       setAlertConfig({
         title: "Required Fields",
         message: "Please fill in all the details to continue.",
@@ -65,7 +65,7 @@ export default function RegisterScreen() {
     try {
       const data = await authService.register({
         name,
-        username,
+        username: email,
         password,
         role,
       });
@@ -196,7 +196,7 @@ export default function RegisterScreen() {
               </View>
 
               <View style={styles.inputWrapper}>
-                <ThemedText style={styles.label}>Email / Username</ThemedText>
+                <ThemedText style={styles.label}>Email Address</ThemedText>
                 <View
                   style={[
                     styles.inputContainer,
@@ -217,9 +217,10 @@ export default function RegisterScreen() {
                     style={[styles.input, { color: Colors[colorScheme].text }]}
                     placeholder="email@example.com"
                     placeholderTextColor="#8e8e93"
-                    value={username}
-                    onChangeText={setUsername}
+                    value={email}
+                    onChangeText={setEmail}
                     autoCapitalize="none"
+                    keyboardType="email-address"
                   />
                 </View>
               </View>

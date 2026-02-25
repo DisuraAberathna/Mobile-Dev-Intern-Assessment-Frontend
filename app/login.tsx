@@ -22,7 +22,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as authService from "@/api/auth";
 
 export default function LoginScreen() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
@@ -38,10 +38,10 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     Keyboard.dismiss();
-    if (!username || !password) {
+    if (!email || !password) {
       setAlertConfig({
         title: "Required Fields",
-        message: "Please enter both username and password to continue.",
+        message: "Please enter both email and password to continue.",
         type: "warning",
       });
       setShowAlert(true);
@@ -51,7 +51,7 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
-      const data = await authService.login(username, password);
+      const data = await authService.login(email, password);
 
       if (data && data.token) {
         await AsyncStorage.setItem("userToken", data.token);
@@ -137,13 +137,13 @@ export default function LoginScreen() {
                   Secure Login
                 </ThemedText>
                 <ThemedText style={styles.subtitle}>
-                  Enter your details to access your account
+                  Enter your email to access your account
                 </ThemedText>
               </View>
 
               <View style={styles.formContainer}>
                 <View style={styles.inputWrapper}>
-                  <ThemedText style={styles.label}>Username</ThemedText>
+                  <ThemedText style={styles.label}>Email Address</ThemedText>
                   <View
                     style={[
                       styles.inputContainer,
@@ -155,7 +155,7 @@ export default function LoginScreen() {
                     ]}
                   >
                     <MaterialIcons
-                      name="person-outline"
+                      name="mail-outline"
                       size={20}
                       color="#8e8e93"
                       style={styles.inputIcon}
@@ -165,11 +165,12 @@ export default function LoginScreen() {
                         styles.input,
                         { color: Colors[colorScheme].text },
                       ]}
-                      placeholder="Username"
+                      placeholder="email@example.com"
                       placeholderTextColor="#8e8e93"
-                      value={username}
-                      onChangeText={setUsername}
+                      value={email}
+                      onChangeText={setEmail}
                       autoCapitalize="none"
+                      keyboardType="email-address"
                     />
                   </View>
                 </View>
