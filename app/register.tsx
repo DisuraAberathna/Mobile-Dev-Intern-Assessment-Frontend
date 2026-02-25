@@ -26,7 +26,7 @@ export default function RegisterScreen() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState("user"); // Default role
+  const [role, setRole] = useState("user"); 
   const [loading, setLoading] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [alertConfig, setAlertConfig] = useState({
@@ -70,7 +70,7 @@ export default function RegisterScreen() {
         role,
       });
 
-      if (data.token) {
+      if (data && data.token) {
         await AsyncStorage.setItem("userToken", data.token);
         if (data.role) {
           await AsyncStorage.setItem("userRole", data.role);
@@ -88,7 +88,13 @@ export default function RegisterScreen() {
           router.replace("/(tabs)/home");
         }, 1500);
       } else {
-        throw new Error("Token not received");
+        setAlertConfig({
+          title: "Registration Failed",
+          message: data?.message || "Token not received. Please try again.",
+          type: "error",
+        });
+        setShowAlert(true);
+        setLoading(false);
       }
     } catch (error: any) {
       console.error("Registration Error:", error);
@@ -125,9 +131,9 @@ export default function RegisterScreen() {
       />
       <SafeAreaView style={{ flex: 1 }}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior="padding"
           style={styles.keyboardView}
-          enabled={Platform.OS === "ios"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 50}
         >
           <ScrollView
             contentContainerStyle={styles.scrollContent}
@@ -281,9 +287,15 @@ export default function RegisterScreen() {
                 activeOpacity={0.8}
               >
                 {loading ? (
-                  <ActivityIndicator color="#fff" />
+                  <ActivityIndicator
+                    color={colorScheme === "dark" ? "#000" : "#fff"}
+                  />
                 ) : (
-                  <ThemedText style={styles.registerButtonText}>
+                  <ThemedText
+                    style={styles.registerButtonText}
+                    lightColor="#fff"
+                    darkColor="#000"
+                  >
                     Create Account
                   </ThemedText>
                 )}
@@ -401,7 +413,6 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   registerButtonText: {
-    color: "#fff",
     fontSize: 17,
     fontWeight: "700",
   },
