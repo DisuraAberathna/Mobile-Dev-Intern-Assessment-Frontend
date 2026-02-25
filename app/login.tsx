@@ -62,9 +62,14 @@ export default function LoginScreen() {
         setLoading(false);
         router.replace("/(tabs)/home");
       } else {
+        const errorMessage =
+          data?.errors && data.errors.length > 0
+            ? data.errors[0].message
+            : data?.message || "Login failed. Please check your credentials.";
+
         setAlertConfig({
           title: "Login Failed",
-          message: data?.message || "Token not received. Please try again.",
+          message: errorMessage,
           type: "error",
         });
         setShowAlert(true);
