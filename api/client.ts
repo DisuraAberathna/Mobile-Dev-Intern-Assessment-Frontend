@@ -12,6 +12,9 @@ const apiClient = axios.create({
         "Content-Type": "application/json",
         Accept: "application/json",
     },
+    validateStatus: (status) => {
+        return status < 500;
+    },
 });
 
 apiClient.interceptors.request.use(
@@ -28,9 +31,10 @@ apiClient.interceptors.request.use(
 );
 
 apiClient.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        return response;
+    },
     (error) => {
-        console.error("API Error:", error.response?.data || error.message);
         return Promise.reject(error);
     }
 );
