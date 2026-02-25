@@ -8,8 +8,7 @@ export const login = async (username: string, password: string) => {
         });
         return response.data;
     } catch (error: any) {
-        console.error("Login API Error:", error.response?.data || error.message);
-        return error.response?.data || null;
+        return error.response?.data || { message: "Network error occurred." };
     }
 };
 
@@ -18,17 +17,16 @@ export const register = async (userData: any) => {
         const response = await apiClient.post("/auth/register", userData);
         return response.data;
     } catch (error: any) {
-        console.error("Register API Error:", error.response?.data || error.message);
-        return error.response?.data || null;
+        return error.response?.data || { message: "Network error occurred." };
     }
 };
 
 export const getProfile = async () => {
     try {
         const response = await apiClient.get("/auth/profile");
+        if (response.status !== 200) return null;
         return response.data.user;
     } catch (error: any) {
-        console.error("Get Profile API Error:", error.response?.data || error.message);
         return null;
     }
 };
