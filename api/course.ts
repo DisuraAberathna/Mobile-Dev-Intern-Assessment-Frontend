@@ -15,52 +15,32 @@ export interface Course {
 }
 
 export const getAllCourses = async (): Promise<Course[]> => {
-    try {
-        const response = await client.get("/course");
-        if (response.status !== 200) return [];
-        return response.data.courses || [];
-    } catch (error) {
-        return [];
-    }
+    const response = await client.get("/course");
+    if (response.status !== 200) return [];
+    return response.data.courses || [];
 };
 
 export const getCourseById = async (id: string): Promise<Course | null> => {
-    try {
-        const response = await client.get(`/course/${id}`);
-        if (response.status !== 200) return null;
-        return response.data.course;
-    } catch (error) {
-        return null;
-    }
+    const response = await client.get(`/course/${id}`);
+    if (response.status !== 200) return null;
+    return response.data.course;
 };
 
 export const enrollInCourse = async (id: string): Promise<any> => {
-    try {
-        const response = await client.post(`/course/${id}/enroll`);
-        return response.data;
-    } catch (error) {
-        return null;
-    }
+    const response = await client.post(`/course/${id}/enroll`);
+    return response.data;
 };
 
 export const getEnrolledCourses = async (): Promise<Course[]> => {
-    try {
-        const response = await client.get("/course/my-enrolled");
-        if (response.status !== 200) return [];
-        return response.data.enrolledCourses || [];
-    } catch (error) {
-        return [];
-    }
+    const response = await client.get("/course/my-enrolled");
+    if (response.status !== 200) return [];
+    return response.data.enrolledCourses || [];
 };
 
 export const getInstructorCourses = async (): Promise<Course[]> => {
-    try {
-        const response = await client.get("/course/instructor/my-courses");
-        if (response.status !== 200) return [];
-        return response.data.courses || [];
-    } catch (error) {
-        return [];
-    }
+    const response = await client.get("/course/instructor/my-courses");
+    if (response.status !== 200) return [];
+    return response.data.courses || [];
 };
 
 export const createCourse = async (courseData: {
@@ -68,12 +48,8 @@ export const createCourse = async (courseData: {
     description: string;
     content: string;
 }): Promise<any> => {
-    try {
-        const response = await client.post("/course", courseData);
-        return response.data;
-    } catch (error) {
-        return null;
-    }
+    const response = await client.post("/course", courseData);
+    return response.data;
 };
 
 export const updateCourse = async (id: string, courseData: {
@@ -81,19 +57,11 @@ export const updateCourse = async (id: string, courseData: {
     description: string;
     content: string;
 }): Promise<any> => {
-    try {
-        const response = await client.put(`/course/${id}`, courseData);
-        return response.data;
-    } catch (error) {
-        return null;
-    }
+    const response = await client.put(`/course/${id}`, courseData);
+    return response.data;
 };
 
 export const deleteCourse = async (id: string): Promise<any> => {
-    try {
-        const response = await client.delete(`/course/${id}`);
-        return response.data;
-    } catch (error) {
-        return null;
-    }
+    const response = await client.delete(`/course/${id}`);
+    return response.data;
 };

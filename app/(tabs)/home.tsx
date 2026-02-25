@@ -108,36 +108,32 @@ export default function HomeScreen() {
 
   const fetchAiRecommendations = async (prompt: string) => {
     setAiLoading(true);
-    try {
-      const response = await geminiService.getAiRecommendations(prompt);
+    const data = await geminiService.getAiRecommendations(prompt);
 
-      if (response.status >= 400) {
-        const errorMessage =
-          response.data?.message || "Failed to fetch AI recommendations.";
-        setAlertConfig({
-          title: "Recommendation Error",
-          message: errorMessage,
-          type: "error",
-          confirmText: "OK",
-          cancelText: undefined,
-        });
-        setShowAlert(true);
-        return;
-      }
-
-      const data = response.data.recommendations || [];
-      setAiCourses(data);
-
-      await Promise.all([
-        AsyncStorage.setItem("cachedAiInterests", prompt),
-        AsyncStorage.setItem("cachedAiCourses", JSON.stringify(data)),
-        AsyncStorage.setItem("lastAiFetchTime", Date.now().toString()),
-      ]);
-    } catch (error: any) {
-      console.error("AI Fetch error:", error);
-    } finally {
+    if (!data || !data.recommendations) {
+      const errorMessage =
+        data?.message || "Failed to fetch AI recommendations.";
+      setAlertConfig({
+        title: "Recommendation Error",
+        message: errorMessage,
+        type: "error",
+        confirmText: "OK",
+        cancelText: undefined,
+      });
+      setShowAlert(true);
       setAiLoading(false);
+      return;
     }
+
+    const recommendations = data.recommendations || [];
+    setAiCourses(recommendations);
+
+    await Promise.all([
+      AsyncStorage.setItem("cachedAiInterests", prompt),
+      AsyncStorage.setItem("cachedAiCourses", JSON.stringify(recommendations)),
+      AsyncStorage.setItem("lastAiFetchTime", Date.now().toString()),
+    ]);
+    setAiLoading(false);
   };
 
   useEffect(() => {

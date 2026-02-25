@@ -33,7 +33,10 @@ apiClient.interceptors.response.use(
         return response;
     },
     (error) => {
-        return Promise.reject(error);
+        return Promise.resolve(error.response || {
+            status: 500,
+            data: { message: error.message || "Network error occurred." },
+        });
     }
 );
 
