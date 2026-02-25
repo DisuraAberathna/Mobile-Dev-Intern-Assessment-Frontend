@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -16,6 +15,7 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import * as authService from "@/api/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { CustomAlert } from "@/components/ui/custom-alert";
 
 function ProfileScreen() {
   const params = useLocalSearchParams();
@@ -25,6 +25,7 @@ function ProfileScreen() {
 
   const [user, setUser] = useState<any>(initialUser);
   const [loading, setLoading] = useState(!initialUser);
+  const [showLogoutAlert, setShowLogoutAlert] = useState(false);
   const router = useRouter();
   const colorScheme = useColorScheme() ?? "light";
   const tintColor = Colors[colorScheme].tint;
@@ -45,17 +46,12 @@ function ProfileScreen() {
   };
 
   const handleLogout = async () => {
-    Alert.alert("Logout", "Are you sure you want to log out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Logout",
-        style: "destructive",
-        onPress: async () => {
-          await AsyncStorage.multiRemove(["userToken", "userRole"]);
-          router.replace("/login");
-        },
-      },
-    ]);
+    setShowLogoutAlert(true);
+  };
+
+  const confirmLogout = async () => {
+    await AsyncStorage.multiRemove(["userToken", "userRole"]);
+    router.replace("/login");
   };
 
   if (loading) {
@@ -68,6 +64,16 @@ function ProfileScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      <CustomAlert
+        visible={showLogoutAlert}
+        title="Logout"
+        message="Are you sure you want to log out of your account?"
+        type="warning"
+        confirmText="Logout"
+        cancelText="Cancel"
+        onConfirm={confirmLogout}
+        onCancel={() => setShowLogoutAlert(false)}
+      />
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
           <TouchableOpacity
