@@ -9,12 +9,16 @@ import { Course } from "@/api/course";
 interface CourseCardProps {
   course: Course;
   onPress: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   horizontal?: boolean;
 }
 
 export function CourseCard({
   course,
   onPress,
+  onEdit,
+  onDelete,
   horizontal = false,
 }: CourseCardProps) {
   const colorScheme = useColorScheme() ?? "light";
@@ -74,6 +78,19 @@ export function CourseCard({
             {course.enrolledStudents.length} enrolled
           </ThemedText>
         </View>
+      </View>
+
+      <View style={styles.actionsContainer}>
+        {onEdit && (
+          <TouchableOpacity style={styles.actionButton} onPress={onEdit}>
+            <MaterialIcons name="edit" size={20} color={tintColor} />
+          </TouchableOpacity>
+        )}
+        {onDelete && (
+          <TouchableOpacity style={styles.actionButton} onPress={onDelete}>
+            <MaterialIcons name="delete-outline" size={20} color="#FF3B30" />
+          </TouchableOpacity>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -155,5 +172,14 @@ const styles = StyleSheet.create({
   studentCount: {
     fontSize: 12,
     color: "#8E8E93",
+  },
+  actionsContainer: {
+    flexDirection: "row",
+    paddingRight: 10,
+    gap: 10,
+  },
+  actionButton: {
+    padding: 8,
+    borderRadius: 10,
   },
 });
