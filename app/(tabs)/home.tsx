@@ -22,16 +22,28 @@ import * as authService from "@/api/auth";
 import * as geminiService from "@/api/gemini";
 import { Course } from "@/api/course";
 import { useRouter, useFocusEffect } from "expo-router";
+import { CustomAlert, AlertType } from "@/components/ui/custom-alert";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function HomeScreen() {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [instructorCourses, setInstructorCourses] = useState<Course[]>([]);
   const [aiCourses, setAiCourses] = useState<Course[]>([]);
   const [user, setUser] = useState<any>(null);
   const [interests, setInterests] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [aiLoading, setAiLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
+  const [showAlert, setShowAlert] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [alertConfig, setAlertConfig] = useState({
+    title: "",
+    message: "",
+    type: "info" as AlertType,
+    confirmText: "OK",
+    cancelText: undefined as string | undefined,
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const colorScheme = useColorScheme() ?? "light";
   const tintColor = Colors[colorScheme].tint;
@@ -47,11 +59,16 @@ export default function HomeScreen() {
       setCourses(coursesData);
       setUser(userData);
 
+      if (userData?.role === "instructor") {
+        const myCourses = await courseService.getInstructorCourses();
+        setInstructorCourses(myCourses);
+      }
+
       if (savedInterests !== interests) {
         setInterests(savedInterests);
       }
 
-      if (savedInterests) {
+      if (savedInterests && userData?.role !== "instructor") {
         handleAiRecommendations(savedInterests);
       }
     } catch (error) {
@@ -120,6 +137,37 @@ export default function HomeScreen() {
   const onRefresh = () => {
     setRefreshing(true);
     fetchData();
+  };
+
+  const handleDeleteCourse = (courseId: string) => {
+    setPendingDeleteId(courseId);
+    setAlertConfig({
+      title: "Delete Course",
+      message:
+        "Are you sure you want to delete this course? This action cannot be undone.",
+      type: "warning",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+    });
+    setShowAlert(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!pendingDeleteId) return;
+    try {
+      const data = await courseService.deleteCourse(pendingDeleteId);
+      if (data) {
+        setInstructorCourses((prev) =>
+          prev.filter((c) => c._id !== pendingDeleteId),
+        );
+        setCourses((prev) => prev.filter((c) => c._id !== pendingDeleteId));
+      }
+    } catch (error) {
+      console.error("Delete course error:", error);
+    } finally {
+      setShowAlert(false);
+      setPendingDeleteId(null);
+    }
   };
 
   const filteredCourses = courses.filter((course) =>
@@ -250,7 +298,7 @@ export default function HomeScreen() {
 
   const renderHeader = () => (
     <View style={styles.content}>
-      {searchQuery === "" && (
+      {searchQuery === "" && user?.role !== "instructor" && (
         <>
           {renderInterestsCTA()}
           {renderAiRecommendations()}
@@ -258,12 +306,34 @@ export default function HomeScreen() {
         </>
       )}
 
+      {user?.role === "instructor" && (
+        <TouchableOpacity
+          style={[styles.addCourseCTA, { backgroundColor: tintColor }]}
+          onPress={() => router.push("/add-course")}
+        >
+          <MaterialIcons
+            name="add"
+            size={24}
+            color={colorScheme === "dark" ? "#000" : "#fff"}
+          />
+          <ThemedText
+            style={styles.addCourseCTAText}
+            lightColor="#fff"
+            darkColor="#000"
+          >
+            Create New Course
+          </ThemedText>
+        </TouchableOpacity>
+      )}
+
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <ThemedText type="subtitle">
-            {searchQuery === ""
-              ? "All Courses"
-              : `Search results for "${searchQuery}"`}
+            {user?.role === "instructor"
+              ? "My Created Courses"
+              : searchQuery === ""
+                ? "All Courses"
+                : `Search results for "${searchQuery}"`}
           </ThemedText>
         </View>
       </View>
@@ -277,8 +347,28 @@ export default function HomeScreen() {
     </View>
   );
 
+  const displayCourses =
+    user?.role === "instructor"
+      ? instructorCourses.filter((c) =>
+          c.title.toLowerCase().includes(searchQuery.toLowerCase()),
+        )
+      : filteredCourses;
+
   return (
     <ThemedView style={styles.container}>
+      <CustomAlert
+        visible={showAlert}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        confirmText={alertConfig.confirmText}
+        cancelText={alertConfig.cancelText}
+        onConfirm={pendingDeleteId ? confirmDelete : () => setShowAlert(false)}
+        onCancel={() => {
+          setShowAlert(false);
+          setPendingDeleteId(null);
+        }}
+      />
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         <View style={styles.header}>
           <View>
@@ -286,7 +376,9 @@ export default function HomeScreen() {
               Hello, {user?.name || "Learner!"}
             </ThemedText>
             <ThemedText type="title" style={styles.headerTitle}>
-              Find Your Class
+              {user?.role === "instructor"
+                ? "Instructor Dashboard"
+                : "Find Your Class"}
             </ThemedText>
           </View>
           <TouchableOpacity
@@ -319,7 +411,11 @@ export default function HomeScreen() {
         >
           <MaterialIcons name="search" size={20} color="#8e8e93" />
           <TextInput
-            placeholder="Search for courses..."
+            placeholder={
+              user?.role === "instructor"
+                ? "Search my courses..."
+                : "Search for courses..."
+            }
             placeholderTextColor="#8e8e93"
             style={[styles.searchInput, { color: Colors[colorScheme].text }]}
             value={searchQuery}
@@ -340,11 +436,25 @@ export default function HomeScreen() {
       ) : (
         <View style={{ flex: 1, paddingBottom: 25 }}>
           <FlashList
-            data={filteredCourses}
+            data={displayCourses}
             renderItem={({ item }) => (
               <View style={{ paddingHorizontal: 20 }}>
                 <CourseCard
                   course={item}
+                  onEdit={
+                    user?.role === "instructor"
+                      ? () =>
+                          router.push({
+                            pathname: "/add-course",
+                            params: { id: item._id },
+                          })
+                      : undefined
+                  }
+                  onDelete={
+                    user?.role === "instructor"
+                      ? () => handleDeleteCourse(item._id)
+                      : undefined
+                  }
                   onPress={() =>
                     router.push({
                       pathname: "/course/[id]",
@@ -479,5 +589,24 @@ const styles = StyleSheet.create({
     fontSize: 13,
     opacity: 0.7,
     lineHeight: 18,
+  },
+  addCourseCTA: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+    padding: 16,
+    borderRadius: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  addCourseCTAText: {
+    fontSize: 16,
+    fontWeight: "700",
   },
 });
