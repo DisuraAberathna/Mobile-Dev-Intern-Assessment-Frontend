@@ -26,7 +26,7 @@ export default function RegisterScreen() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState("user"); 
+  const [role, setRole] = useState("student");
   const [loading, setLoading] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [alertConfig, setAlertConfig] = useState({
@@ -88,9 +88,14 @@ export default function RegisterScreen() {
           router.replace("/(tabs)/home");
         }, 1500);
       } else {
+        const errorMessage =
+          data?.errors && data.errors.length > 0
+            ? data.errors[0].message
+            : data?.message || "Registration failed. Please try again.";
+
         setAlertConfig({
           title: "Registration Failed",
-          message: data?.message || "Token not received. Please try again.",
+          message: errorMessage,
           type: "error",
         });
         setShowAlert(true);
