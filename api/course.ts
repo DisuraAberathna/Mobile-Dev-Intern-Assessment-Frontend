@@ -52,3 +52,48 @@ export const getEnrolledCourses = async (): Promise<Course[]> => {
         return [];
     }
 };
+
+export const getInstructorCourses = async (): Promise<Course[]> => {
+    try {
+        const response = await client.get("/course/instructor/my-courses");
+        if (response.status !== 200) return [];
+        return response.data.courses || [];
+    } catch (error) {
+        return [];
+    }
+};
+
+export const createCourse = async (courseData: {
+    title: string;
+    description: string;
+    content: string;
+}): Promise<any> => {
+    try {
+        const response = await client.post("/course", courseData);
+        return response.data;
+    } catch (error) {
+        return null;
+    }
+};
+
+export const updateCourse = async (id: string, courseData: {
+    title: string;
+    description: string;
+    content: string;
+}): Promise<any> => {
+    try {
+        const response = await client.put(`/course/${id}`, courseData);
+        return response.data;
+    } catch (error) {
+        return null;
+    }
+};
+
+export const deleteCourse = async (id: string): Promise<any> => {
+    try {
+        const response = await client.delete(`/course/${id}`);
+        return response.data;
+    } catch (error) {
+        return null;
+    }
+};
