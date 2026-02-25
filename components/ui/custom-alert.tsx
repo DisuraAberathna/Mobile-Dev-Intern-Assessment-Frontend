@@ -46,17 +46,21 @@ export function CustomAlert({
   const getTypeStyles = () => {
     switch (type) {
       case "success":
-        return { icon: "check-circle", color: "#34c759" };
+        return { icon: "check-circle", color: "#34c759", textColor: "#fff" };
       case "error":
-        return { icon: "error", color: "#ff3b30" };
+        return { icon: "error", color: "#ff3b30", textColor: "#fff" };
       case "warning":
-        return { icon: "warning", color: "#ffcc00" };
+        return { icon: "warning", color: "#ffcc00", textColor: "#000" };
       default:
-        return { icon: "info", color: tintColor };
+        return {
+          icon: "info",
+          color: tintColor,
+          textColor: colorScheme === "dark" ? "#000" : "#fff",
+        };
     }
   };
 
-  const { icon, color } = getTypeStyles();
+  const { icon, color, textColor } = getTypeStyles();
 
   return (
     <Modal
@@ -96,7 +100,9 @@ export function CustomAlert({
               style={[styles.button, { backgroundColor: color }]}
               onPress={onConfirm}
             >
-              <ThemedText style={styles.confirmButtonText}>
+              <ThemedText
+                style={[styles.confirmButtonText, { color: textColor }]}
+              >
                 {confirmText}
               </ThemedText>
             </TouchableOpacity>
@@ -161,7 +167,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   confirmButtonText: {
-    color: "#fff",
     fontSize: 16,
     fontWeight: "700",
   },
