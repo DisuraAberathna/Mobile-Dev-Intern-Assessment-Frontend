@@ -29,6 +29,8 @@ export default function RegisterScreen() {
   const [role, setRole] = useState("student");
   const [loading, setLoading] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [alertConfig, setAlertConfig] = useState({
     title: "",
     message: "",
@@ -247,10 +249,19 @@ export default function RegisterScreen() {
                     style={[styles.input, { color: Colors[colorScheme].text }]}
                     placeholder="••••••••"
                     placeholderTextColor="#8e8e93"
-                    secureTextEntry
+                    secureTextEntry={!showPassword}
                     value={password}
                     onChangeText={setPassword}
                   />
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                  >
+                    <MaterialIcons
+                      name={showPassword ? "visibility-off" : "visibility"}
+                      size={20}
+                      color="#8e8e93"
+                    />
+                  </TouchableOpacity>
                 </View>
               </View>
 
@@ -276,10 +287,21 @@ export default function RegisterScreen() {
                     style={[styles.input, { color: Colors[colorScheme].text }]}
                     placeholder="••••••••"
                     placeholderTextColor="#8e8e93"
-                    secureTextEntry
+                    secureTextEntry={!showConfirmPassword}
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
                   />
+                  <TouchableOpacity
+                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    <MaterialIcons
+                      name={
+                        showConfirmPassword ? "visibility-off" : "visibility"
+                      }
+                      size={20}
+                      color="#8e8e93"
+                    />
+                  </TouchableOpacity>
                 </View>
               </View>
 
