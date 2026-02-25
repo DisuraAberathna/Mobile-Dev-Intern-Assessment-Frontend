@@ -81,18 +81,18 @@ export default function InitialCheckScreen() {
               ]}
             >
               <MaterialIcons
-                name={error ? "security" : "shield"}
+                name={error ? "security" : "school"}
                 size={60}
                 color={error ? "#ff3b30" : Colors[colorScheme].tint}
               />
             </View>
             <ThemedText type="title" style={styles.title}>
-              {error ? "Security Check" : "TradeHub"}
+              {error ? "Security Check" : "Course App"}
             </ThemedText>
             <ThemedText style={styles.subtitle}>
               {error
                 ? "Action Required"
-                : "Performing secure startup checks..."}
+                : "Setting up your learning experience..."}
             </ThemedText>
           </View>
 
