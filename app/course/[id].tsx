@@ -78,20 +78,22 @@ export default function CourseDetailsScreen() {
     }
 
     setEnrolling(true);
-    const updatedCourse = await courseService.enrollInCourse(id);
+    const data = await courseService.enrollInCourse(id);
     setEnrolling(false);
 
-    if (updatedCourse) {
-      setCourse(updatedCourse);
+    if (data && data.course) {
+      setCourse(data.course);
       setAlertConfig({
         title: "Success!",
-        message: "You have successfully enrolled in this course.",
+        message:
+          data.message || "You have successfully enrolled in this course.",
         type: "success",
       });
     } else {
       setAlertConfig({
         title: "Enrollment Failed",
-        message: "Something went wrong. Please try again later.",
+        message:
+          data?.message || "Something went wrong. Please try again later.",
         type: "error",
       });
     }
