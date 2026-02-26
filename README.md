@@ -24,7 +24,7 @@ React Native (Expo) frontend for the Course App Mobile Dev Intern Assessment.
 npm install
 ```
 
-2. Create a `.env` file in `frontend/`:
+2. Create a `.env` file:
 
 ```env
 EXPO_PUBLIC_API_URL=http://YOUR_LOCAL_IP:5000
